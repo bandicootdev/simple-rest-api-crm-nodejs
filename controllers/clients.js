@@ -74,3 +74,18 @@ module.exports.updateClient = async (req, res, next) => {
     next(err)
   }
 }
+
+module.exports.destroyClient = async (req, res, next) => {
+  try {
+    let {id} = req.params;
+    let client = await Clients.findByIdAndDelete({_id: id}).catch(err => {
+      throw err
+    })
+    if (client === null) {
+      return res.status(204).json({ok: true, message: 'non-existent client'})
+    }
+    res.status(200).json({ok: true, message: 'Customer removed'})
+  } catch (err) {
+    next(err)
+  }
+}
