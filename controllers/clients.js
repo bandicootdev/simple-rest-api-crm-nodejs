@@ -15,6 +15,21 @@ module.exports.getAllClients = async (req, res, next) => {
   }
 }
 
+module.exports.getOneClient = async (req, res, next) => {
+  try {
+    const {id} = req.params
+    const client = await Clients.findById(id).catch(err => {
+      throw err
+    })
+    if (!client) {
+      return res.status(204).json({ok: true, message: 'non-existent client'})
+    }
+     res.status(200).json({ok: true, client})
+  } catch (err) {
+    next(err)
+  }
+}
+
 module.exports.createClient = async (req, res, next) => {
   try {
     const {name, lastName, company, email, phone} = req.body;
