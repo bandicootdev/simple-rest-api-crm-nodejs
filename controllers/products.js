@@ -1,4 +1,6 @@
 const Products = require('../models/Products');
+const {removeImage} = require("../utils/functions");
+const {fileExists} = require("../utils/functions");
 
 module.exports.getAllProducts = async (req, res, next) => {
   try {
@@ -47,7 +49,7 @@ module.exports.createProduct = async (req, res, next) => {
       throw err
     })
 
-    res.status(200).json({ok: false, message: 'Product created successfully'})
+    res.status(200).json({ok: true, message: 'Product created successfully'})
   } catch (err) {
     next(err)
   }
@@ -57,15 +59,27 @@ module.exports.updateProduct = async (req, res, next) => {
   try {
     const {id} = req.params;
     let dataProduct = req.body;
-    if (Object.keys(dataProduct).length === 0) {
-      return res.status(400).json({ok: false, message: 'Required fields'})
-    }
 
     let product = await Products.findById(id).catch(err => {
       throw err
     })
+
     if (req.file) {
-      dataProduct.image = req.file.filename;
+      if (product.image) {
+        let fExist = await fileExists(product.image).catch(err => {
+          throw err
+        })
+        if (fExist === true) {
+          let fRemove = await removeImage(product.image).catch(err => {
+            throw err
+          })
+          if (fRemove === true) {
+            dataProduct.image = req.file.filename;
+          }
+        }
+      } else {
+        dataProduct.image = req.file.filename;
+      }
     } else {
       dataProduct.image = product.image;
     }
@@ -78,8 +92,13 @@ module.exports.updateProduct = async (req, res, next) => {
     });
 
     res.status(200).json({ok: true, product: updatedProduct});
-  } catch
-    (err) {
+  } catch (err) {
+    if (req.file) await removeImage(req.file.filename).catch(err => {
+      next(err)
+    })
+    if (err.message.split(':')[1].split(',')[0].trim() === 'no such file or directory') {
+      return res.status(400).json({ok: false, message: 'image not found'})
+    }
     next(err)
   }
 }

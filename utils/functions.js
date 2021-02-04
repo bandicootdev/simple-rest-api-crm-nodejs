@@ -1,7 +1,9 @@
 const multer = require('multer');
 const shortid = require('shortid');
 const fs = require('fs');
+const fsPromise = fs.promises;
 const path = require('path');
+
 const configMulter = {
   storage: fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -27,9 +29,26 @@ const upload = multer(configMulter).single('image');
 module.exports.uploadImage = (req, res, next) => {
   upload(req, res, function (error) {
     if (error) {
-
-      res.status(500).json({ok: false, message: error});
+      return res.status(500).json({ok: false, message: error});
     }
     return next();
   })
 }
+
+
+module.exports.fileExists = async (image) => {
+  const pathFile = path.join(__dirname, `../uploads/${image}`);
+  await fsPromise.access(pathFile, fs.constants.F_OK).catch(err => {
+    throw err
+  })
+  return true
+};
+
+
+module.exports.removeImage = async (image) => {
+  const pathFile = path.join(__dirname, `../uploads/${image}`);
+  await fsPromise.unlink(pathFile).catch(err => {
+    throw err
+  })
+  return true;
+};
