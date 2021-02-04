@@ -102,3 +102,39 @@ module.exports.updateProduct = async (req, res, next) => {
     next(err)
   }
 }
+
+module.exports.destroyProduct = async (req, res, next) => {
+  try {
+    const {id} = req.params;
+    let product = await Products.findById(id).catch(err => {
+      throw err
+    })
+    if (!product) {
+      return res.status(400).json({ok: false, message: 'non-existent product'})
+    }
+
+    if (product[`image`]) {
+      const fExist = await fileExists(product[`image`]).catch(err => {
+        throw err
+      })
+      if (fExist === true) {
+        const fRemove = await removeImage(product[`image`]).catch(err => {
+          throw err
+        })
+        if (fRemove === true) {
+          await Products.findByIdAndDelete({_id: id}).catch(err => {
+            throw err
+          })
+        }
+      }
+    } else {
+      await Products.findByIdAndDelete({_id: id}).catch(err => {
+        throw err
+      })
+    }
+
+    res.status(200).json({ok: true, message: 'Product removed successfully'})
+  } catch (err) {
+    next(err)
+  }
+}
