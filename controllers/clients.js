@@ -24,7 +24,7 @@ module.exports.getOneClient = async (req, res, next) => {
     if (!client) {
       return res.status(204).json({ok: true, message: 'non-existent client'})
     }
-     res.status(200).json({ok: true, client})
+    res.status(200).json({ok: true, client})
   } catch (err) {
     next(err)
   }
@@ -49,6 +49,24 @@ module.exports.createClient = async (req, res, next) => {
       throw err
     })
     res.status(200).json({ok: false, message: 'A new client was added successfully'})
+  } catch (err) {
+    if (err.name === 'MongoError' && err.code === 11000) {
+      return res.status(422).json({ok: false, message: 'Email already exist!'});
+    }
+    next(err)
+  }
+}
+
+module.exports.updateClient = async (req, res, next) => {
+  try {
+    const {id} = req.params;
+    const client = await Clients.findByIdAndUpdate({_id: id}, req.body, {
+      new: true
+    })
+    if (!client) {
+      return res.status(204).json({ok: true, message: 'non-existent client'})
+    }
+    res.status(200).json({ok: true, client})
   } catch (err) {
     if (err.name === 'MongoError' && err.code === 11000) {
       return res.status(422).json({ok: false, message: 'Email already exist!'});
