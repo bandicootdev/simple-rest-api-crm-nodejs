@@ -2,13 +2,15 @@ const express = require('express');
 const app = express();
 const clients = require('./clients');
 const products = require('./products');
+const orders = require('./orders');
 /* initial route */
 app.get('/', (req, res) => {
   res.status(200).json({ok: true, message: 'ok'})
 })
 
-app.use('/clients', clients)
-app.use('/products', products)
+app.use('/clients', clients);
+app.use('/products', products);
+app.use('/orders', orders);
 
 /* routes not found */
 app.get('*', (req, res) => res.status(404).json({ok: false, message: 'Not Found'}))
